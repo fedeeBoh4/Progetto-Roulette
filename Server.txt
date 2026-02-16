@@ -1,0 +1,24 @@
+package roulette.pr1;
+
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class ServerRoulette {
+    public static void main(String[] args) {
+        try {
+            ServerSocket server = new ServerSocket(12345);
+            System.out.println("Server pronto.");
+
+            while (true) {
+                Socket socketClient = server.accept();
+                
+              //Avvio il thread per gestire la partita del singolo giocatore
+                Partita partita = new Partita(socketClient);
+                Thread thread = new Thread(partita);
+                thread.start();
+            }
+        } catch (Exception e) {
+            System.out.println("Errore server.");
+        }
+    }
+}

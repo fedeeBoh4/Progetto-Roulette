@@ -1,0 +1,108 @@
+package roulette.pr1;
+
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.Scanner;
+
+public class ClientRoulette {
+    public static void main(String[] args) {
+        try {
+            Socket socket = new Socket("127.0.0.1", 12345);
+            Scanner in = new Scanner(socket.getInputStream());
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            Scanner sc = new Scanner(System.in);
+
+            int saldo = in.nextInt();
+            System.out.println("Saldo attuale: " + saldo);
+
+            while (true) {
+                int puntata = -1;
+
+                //Validazione Puntata (Budget e Numeri)
+                while (true) {
+                    System.out.print("\nInserisci puntata (0 esce): ");
+                    if (sc.hasNextInt()) {
+                        puntata = sc.nextInt();
+                        sc.nextLine();
+
+                        if (puntata == 0) {
+                            break; 
+                        }
+                        if (puntata > saldo) {
+                            System.out.println("Errore: Saldo insufficiente (" + saldo + ").");
+                        } else if (puntata < 0) {
+                            System.out.println("Errore: No numeri negativi.");
+                        } else {
+                            break;
+                        }
+                    } else {
+                        System.out.println("Errore: Inserisci un numero.");
+                        sc.next();
+                    }
+                }
+
+                if (puntata == 0) {
+                    out.println(0);
+                    break;
+                }
+
+                //Validazione Colore
+                String col = "";
+                while (!col.equalsIgnoreCase("Rosso") && !col.equalsIgnoreCase("Nero") && !col.equalsIgnoreCase("No")) {
+                    System.out.print("Scegli Colore (Rosso/Nero/No): ");
+                    col = sc.nextLine();
+                }
+
+                //Validazione Tipo
+                String tipo = "";
+                while (!tipo.equalsIgnoreCase("Pari") && !tipo.equalsIgnoreCase("Dispari") && !tipo.equalsIgnoreCase("No")) {
+                    System.out.print("Scegli Tipo (Pari/Dispari/No): ");
+                    tipo = sc.nextLine();
+                }
+
+                //Validazione Numero (Range 0-36 o -1)
+                int num = -2; //Inizializzo fuori dal range
+                while (true) {
+                    System.out.print("Scegli Numero (0-36, -1 no): ");
+                    if (sc.hasNextInt()) {
+                        num = sc.nextInt();
+                        sc.nextLine();
+                        
+                        //Controllo se il numero è tra 0 e 36 oppure è esattamente -1
+                        if ((num >= 0 && num <= 36) || num == -1) {
+                            break;
+                        } else {
+                            System.out.println("Errore: Inserisci un numero tra 0 e 36 (o -1)");
+                        }
+                    } else {
+                        System.out.println("Errore: Inserisci un valore numerico");
+                        sc.next();
+                    }
+                }
+
+                // Invio dati validati al server
+                out.println(puntata);
+                out.println(col);
+                out.println(tipo);
+                out.println(num);
+
+                // Risultati
+                System.out.println("Uscito: " + in.nextInt() + " " + in.next());
+                if (in.nextBoolean()) {
+                    System.out.println("Hai vinto!");
+                } else {
+                    System.out.println("Hai perso.");
+                }
+                
+                System.out.print("Nuova partita (N) o Continua (C)? ");
+                out.println(sc.nextLine());
+
+                saldo = in.nextInt();
+                System.out.println("Saldo aggiornato: " + saldo);
+            }
+            socket.close();
+        } catch (Exception e) {
+            System.out.println("Connessione chiusa");
+        }
+    }
+}

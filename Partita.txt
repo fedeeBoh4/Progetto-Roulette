@@ -1,0 +1,95 @@
+package roulette.pr1;
+
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.Random;
+import java.util.Scanner;
+
+public class Partita implements Runnable {
+    private Socket socket;
+
+    public Partita(Socket socket) {
+        this.socket = socket;
+    }
+
+    public void run() {
+        try {
+            Scanner in = new Scanner(socket.getInputStream());
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            Random random = new Random();
+            int saldo = 100;
+            out.println(saldo);
+
+            while (true) {
+                int puntata = in.nextInt();
+                if (puntata <= 0) {
+                    break;
+                }
+
+                String colScelto = in.next();
+                String tipoScelto = in.next();
+                int numScelto = in.nextInt();
+
+                int estratto = random.nextInt(37);
+                String colEstratto;
+                
+                if (estratto == 0) {
+                    colEstratto = "Verde";
+                } else if (estratto % 2 == 0) {
+                    colEstratto = "Nero";
+                } else {
+                    colEstratto = "Rosso";
+                }
+
+                boolean vinto = true;
+
+                //Se non c'è nessuna scommessa attiva, il giocatore perde
+                if (colScelto.equalsIgnoreCase("No") && tipoScelto.equalsIgnoreCase("No") && numScelto == -1) {
+                    vinto = false;
+                } else {
+                    if (estratto == 0) {
+                        //Lo zero vince solo se indovinato come numero secco
+                        if (numScelto == 0) {
+                            vinto = true;
+                        } else {
+                            vinto = false;
+                        }
+                    } else {
+                        if (!colScelto.equalsIgnoreCase("No") && !colScelto.equalsIgnoreCase(colEstratto)) {
+                            vinto = false;
+                        }
+                        if (tipoScelto.equalsIgnoreCase("Pari") && estratto % 2 != 0) {
+                            vinto = false;
+                        }
+                        if (tipoScelto.equalsIgnoreCase("Dispari") && estratto % 2 == 0) {
+                            vinto = false;
+                        }
+                        if (numScelto != -1 && numScelto != estratto) {
+                            vinto = false;
+                        }
+                    }
+                }
+
+                if (vinto) {
+                    saldo = saldo + puntata;
+                } else {
+                    saldo = saldo - puntata;
+                }
+
+                out.println(estratto);
+                out.println(colEstratto);
+                out.println(vinto);
+                out.println(saldo);
+
+                String scelta = in.next();
+                if (scelta.equalsIgnoreCase("N")) {
+                    saldo = 100;
+                }
+                out.println(saldo);
+            }
+            socket.close();
+        } catch (Exception e) {
+            System.out.println("Giocatore disconnesso");
+        }
+    }
+}
